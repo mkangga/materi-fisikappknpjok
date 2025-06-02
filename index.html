@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Interaktif Materi Kelas 10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Visualization & Content Choices: 
+        - [PJOK] Info: Komponen kebugaran jasmani & latihannya. Goal: Membandingkan & menghubungkan. Viz: Radar Chart (Chart.js) untuk visualisasi komponen kebugaran yang multidimensional. Interaction: Hover pada titik data. Justification: Lebih menarik dan informatif daripada tabel statis.
+        - [PJOK & Lainnya] Info: Daftar teknik/konsep. Goal: Mengorganisir. Method: Kartu interaktif (HTML/Tailwind) dengan efek hover dan accordion (collapsible sections). Interaction: Klik untuk membuka/menutup detail. Justification: Menghemat ruang dan mencegah pengguna kewalahan oleh informasi.
+        - [Pancasila] Info: Hierarki Peraturan Perundang-undangan. Goal: Menunjukkan struktur. Method: Diagram visual dibuat dengan HTML/CSS (div bersarang dengan border). Interaction: Hover untuk highlight. Justification: Representasi visual lebih mudah dipahami daripada daftar bernomor.
+        - [Fisika] Info: Hakikat Fisika (Produk, Proses, Sikap). Goal: Membandingkan & menjelaskan. Method: Tiga kartu informatif berdampingan. Interaction: Efek hover. Justification: Memudahkan perbandingan langsung.
+        - [Fisika] Info: Langkah Metode Ilmiah. Goal: Menunjukkan urutan. Method: Stepper vertikal dengan HTML/CSS. Interaction: Highlight pada item aktif. Justification: Menggambarkan alur proses secara efektif.
+    -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 300px; max-height: 40vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .nav-item { transition: all 0.2s ease-in-out; }
+        .sidebar-item { transition: all 0.2s ease-in-out; }
+        .content-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .content-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .hierarchy-item { border-left-width: 2px; }
+    </style>
+</head>
+<body class="bg-stone-100 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-sky-800">Dasbor Pembelajaran Interaktif</h1>
+            <p class="text-stone-600 mt-2">Materi Kelas 10 Semester 1 - Kurikulum Merdeka</p>
+        </header>
+
+        <nav class="flex justify-center bg-white rounded-xl shadow-md p-2 mb-8 space-x-2">
+            <button id="nav-pjok" class="nav-item flex-1 py-2 px-4 rounded-lg font-semibold text-stone-700 hover:bg-sky-100 hover:text-sky-800">🤸 PJOK</button>
+            <button id="nav-pancasila" class="nav-item flex-1 py-2 px-4 rounded-lg font-semibold text-stone-700 hover:bg-sky-100 hover:text-sky-800">⚖️ Pancasila</button>
+            <button id="nav-fisika" class="nav-item flex-1 py-2 px-4 rounded-lg font-semibold text-stone-700 hover:bg-sky-100 hover:text-sky-800">⚛️ Fisika</button>
+        </nav>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            <aside id="sidebar-container" class="w-full md:w-1/4 lg:w-1/5">
+                </aside>
+            <main id="content-container" class="w-full md:w-3/4 lg:w-4/5 bg-white p-6 rounded-2xl shadow-lg">
+                <div id="content-display">
+                    <div class="text-center py-16">
+                        <h2 class="text-2xl font-semibold text-sky-700">Selamat Datang!</h2>
+                        <p class="mt-4 text-stone-600">Pilih mata pelajaran di atas untuk memulai petualangan belajar Anda. Aplikasi ini dirancang untuk membantu Anda memahami materi secara interaktif dan menyenangkan.</p>
+                        <div class="mt-8 text-5xl">🚀</div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    </div>
+
+    <script>
+        const appData = {
+            pjok: {
+                title: "Pendidikan Jasmani, Olahraga, & Kesehatan",
+                sidebar: [
+                    { id: 'intro', title: 'Pendahuluan' },
+                    { id: 'bola_besar', title: 'Permainan Bola Besar' },
+                    { id: 'bola_kecil', title: 'Permainan Bola Kecil' },
+                    { id: 'atletik', title: 'Aktivitas Atletik' },
+                    { id: 'bela_diri', title: 'Aktivitas Bela Diri' },
+                    { id: 'kebugaran', title: 'Kebugaran Jasmani' },
+                    { id: 'senam', title: 'Aktivitas Senam Lantai' },
+                    { id: 'air', title: 'Aktivitas Air' },
+                    { id: 'kesehatan', title: 'Aspek Kesehatan' }
+                ],
+                content: {
+                    intro: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Serunya Belajar PJOK!</h2>
+                        <p class="text-stone-700 leading-relaxed">
+                            Selamat datang di pelajaran PJOK! Ini bukan sekadar pelajaran yang membuat kita berkeringat, tetapi sebuah perjalanan untuk mengembangkan keterampilan fisik, pengetahuan olahraga, dan pemahaman mendalam tentang kesehatan. Tujuannya adalah meningkatkan kebugaran, mengasah keterampilan motorik, dan membangun kesadaran akan pentingnya gaya hidup sehat. Di Kurikulum Merdeka, kita akan belajar secara aktif dan relevan, tidak hanya teknik, tapi juga manfaat, strategi, dan nilai-nilai sportivitas dalam setiap aktivitas.
+                        </p>`,
+                    bola_besar: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Permainan Bola Besar</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Permainan bola besar melatih kemampuan fisik, kerjasama tim, sportivitas, dan strategi. Anda akan belajar berkoordinasi dengan teman, menghargai lawan, dan mengambil keputusan cepat di lapangan. Klik setiap permainan untuk melihat teknik dasarnya.</p>
+                        <div class="space-y-4">
+                            ${createAccordion('bola_basket', '🏀 Bola Basket', `
+                                <p class="mb-4">Olahraga tim yang dinamis untuk meningkatkan daya tahan kardiovaskular, kekuatan otot, dan kelincahan.</p>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Passing (Mengoper):</b> Kunci permainan menyerang. Termasuk <i>chest pass</i> (operan dada), <i>bounce pass</i> (operan pantul), dan <i>overhead pass</i> (operan atas kepala).</li>
+                                    <li><b>Shooting (Menembak):</b> Usaha mencetak poin dengan memasukkan bola ke ring.</li>
+                                    <li><b>Dribbling (Menggiring):</b> Membawa bola dengan memantulkannya ke lantai untuk bergerak dan menciptakan peluang.</li>
+                                </ul>
+                            `)}
+                            ${createAccordion('sepak_bola', '⚽ Sepak Bola', `
+                                <p class="mb-4">Olahraga tim populer yang membutuhkan stamina, kecepatan, dan keterampilan teknis.</p>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Passing (Mengoper):</b> Mengoper bola secara akurat menggunakan kaki bagian dalam atau punggung kaki.</li>
+                                    <li><b>Stopping/Controlling (Mengontrol Bola):</b> Menghentikan dan menguasai bola yang datang.</li>
+                                    <li><b>Dribbling (Menggiring):</b> Membawa bola melewati lawan sambil tetap menguasainya.</li>
+                                    <li><b>Shooting (Menembak):</b> Menendang bola ke gawang untuk mencetak gol.</li>
+                                </ul>
+                            `)}
+                            ${createAccordion('bola_voli', '🏐 Bola Voli', `
+                                <p class="mb-4">Permainan tim di mana setiap tim berusaha menjatuhkan bola di area lawan.</p>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Passing Bawah:</b> Untuk menerima servis atau serangan lawan.</li>
+                                    <li><b>Passing Atas:</b> Untuk memberikan umpan matang kepada pemukul.</li>
+                                    <li><b>Servis:</b> Pukulan awal untuk memulai permainan.</li>
+                                    <li><b>Spike/Smash:</b> Pukulan serangan yang keras dan menukik.</li>
+                                    <li><b>Block (Bendungan):</b> Teknik bertahan di atas net untuk menghalau smash lawan.</li>
+                                </ul>
+                            `)}
+                        </div>`,
+                    bola_kecil: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Permainan Bola Kecil</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Permainan bola kecil menekankan pada ketangkasan individu, koordinasi mata-tangan, dan presisi. Keterampilan individu seringkali menjadi penentu kemenangan.</p>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200">
+                                <h3 class="font-semibold text-lg text-sky-800">🏸 Bulu Tangkis</h3>
+                                <p class="text-sm text-stone-600 mt-2">Pukulan utama: Servis, Lob, Dropshot, Smash, Drive, Netting.</p>
+                            </div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200">
+                                <h3 class="font-semibold text-lg text-sky-800">🏓 Tenis Meja</h3>
+                                <p class="text-sm text-stone-600 mt-2">Teknik utama: Grip (pegangan), Stance (sikap siap), Pukulan (Forehand & Backhand).</p>
+                            </div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200 col-span-1 md:col-span-2">
+                                <h3 class="font-semibold text-lg text-sky-800">🥎 Softball</h3>
+                                <p class="text-sm text-stone-600 mt-2">Keterampilan tim: Melempar, Menangkap, Memukul (Swing & Bunt), dan Berlari antar base.</p>
+                            </div>
+                        </div>`,
+                    atletik: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Atletik</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Dikenal sebagai "ibu dari semua cabang olahraga", atletik melatih gerakan dasar seperti jalan, lari, lompat, dan lempar yang menjadi fondasi kemampuan fisik.</p>
+                        <div class="space-y-4">
+                            ${createAccordion('jalan_cepat', '🚶‍♂️ Jalan Cepat', '<p>Teknik melangkah efisien dengan aturan satu kaki harus selalu kontak dengan tanah. Melatih disiplin dan daya tahan.</p>')}
+                            ${createAccordion('lari_pendek', '🏃‍♀️ Lari Jarak Pendek (Sprint)', '<p>Menuntut kecepatan maksimal dari start hingga finis. Kunci utama adalah teknik start jongkok, gerakan lari efisien, dan cara memasuki garis finis.</p>')}
+                            ${createAccordion('lompat_jauh', '🤸 Lompat Jauh', '<p>Mengubah kecepatan horizontal (lari awalan) menjadi lompatan sejauh mungkin. Terdiri dari fase awalan, tolakan, melayang, dan mendarat.</p>')}
+                            ${createAccordion('tolak_peluru', '🏋️ Tolak Peluru', '<p>Bukan melempar, tapi menolak peluru logam sejauh mungkin menggunakan kekuatan ledak (power) dari kaki, pinggul, dan lengan.</p>')}
+                        </div>`,
+                    bela_diri: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Bela Diri: Pencak Silat</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Pencak Silat adalah seni bela diri asli Indonesia yang membentuk karakter, disiplin, dan rasa hormat. Pembelajaran dimulai dari dasar yang menjadi fondasi gerakan kompleks.</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Kuda-kuda</b><p class="text-xs">Posisi tumpuan kokoh</p></div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Pola Langkah</b><p class="text-xs">Teknik pergerakan kaki</p></div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Pukulan</b><p class="text-xs">Serangan menggunakan tangan</p></div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Tendangan</b><p class="text-xs">Serangan menggunakan kaki</p></div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Tangkisan</b><p class="text-xs">Pembelaan kontak langsung</p></div>
+                            <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Elakan</b><p class="text-xs">Pembelaan tanpa kontak</p></div>
+                        </div>`,
+                    kebugaran: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Kebugaran Jasmani</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Kebugaran jasmani adalah kemampuan tubuh melakukan aktivitas harian tanpa lelah berlebih. Berikut adalah visualisasi 10 komponen kebugaran jasmani. Arahkan kursor pada titik untuk melihat contoh latihannya.</p>
+                        <div class="chart-container">
+                            <canvas id="kebugaranChart"></canvas>
+                        </div>`,
+                    senam: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Senam Lantai</h2>
+                         <p class="text-stone-700 leading-relaxed mb-6">Senam lantai membutuhkan kombinasi kekuatan, kelenturan, keseimbangan, dan keberanian. Gerakan dilakukan di atas matras untuk keamanan.</p>
+                        <div class="space-y-4">
+                            ${createAccordion('roll_depan', 'Guling Depan (Forward Roll)', '<p>Berguling ke depan dengan tumpuan pada tengkuk, punggung, dan panggul.</p>')}
+                            ${createAccordion('roll_belakang', 'Guling Belakang (Backward Roll)', '<p>Berguling ke belakang dengan posisi badan membulat untuk melindungi leher.</p>')}
+                            ${createAccordion('sikap_lilin', 'Sikap Lilin (Shoulder Stand)', '<p>Posisi kaki lurus ke atas dengan tumpuan pada bahu, melatih keseimbangan.</p>')}
+                            ${createAccordion('kayang', 'Kayang (Bridge)', '<p>Membusurkan badan dengan tumpuan pada tangan dan kaki, melatih kelenturan.</p>')}
+                        </div>`,
+                    air: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aktivitas Air (Renang)</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Renang bukan hanya olahraga, tapi juga keterampilan hidup yang penting. Keselamatan di air adalah prioritas utama. Fokus semester ini adalah penguasaan dasar-dasar renang gaya dada.</p>
+                        <ul class="list-none space-y-3">
+                            <li class="bg-sky-50 p-3 rounded-lg flex items-start gap-3"><span class="text-xl">⚠️</span><div><b>Keselamatan di Air:</b> Selalu patuhi peraturan, sadari potensi bahaya, dan jangan pernah berenang sendirian.</div></li>
+                            <li class="bg-sky-50 p-3 rounded-lg flex items-start gap-3"><span class="text-xl">🐸</span><div><b>Gaya Dada (Gaya Katak):</b> Melibatkan koordinasi gerakan kaki seperti katak, gerakan lengan membuka dan menarik, serta teknik pernapasan yang tepat.</div></li>
+                            <li class="bg-sky-50 p-3 rounded-lg flex items-start gap-3"><span class="text-xl">🛟</span><div><b>Peralatan Bantu:</b> Pelampung dan kacamata renang dapat digunakan untuk membantu proses belajar.</div></li>
+                        </ul>`,
+                    kesehatan: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Aspek Kesehatan</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">PJOK juga membekali kita dengan pengetahuan untuk hidup sehat dan bertanggung jawab. Ini adalah bekal berharga untuk masa depan.</p>
+                         <div class="space-y-4">
+                            ${createAccordion('pola_hidup_sehat', 'Pola Hidup Sehat', '<p>Mencakup pola makan bergizi, olahraga teratur, istirahat cukup, dan mengelola stres. Ini adalah investasi terbaik untuk diri sendiri.</p>')}
+                            ${createAccordion('bahaya_napza', 'Bahaya NAPZA', '<p>Memahami jenis, dampak (fisik, psikis, sosial), dan cara pencegahan penyalahgunaan Narkotika, Psikotropika, dan Zat Adiktif lainnya. Katakan TIDAK pada narkoba!</p>')}
+                            ${createAccordion('kesehatan_reproduksi', 'Kesehatan Reproduksi Remaja', '<p>Mengenali perubahan fisik dan psikis saat pubertas serta cara menjaga kebersihan dan kesehatan organ reproduksi. Pengetahuan ini penting untuk tumbuh sehat dan bertanggung jawab.</p>')}
+                            ${createAccordion('p3k', 'P3K Dasar', '<p>Pertolongan Pertama Pada Kecelakaan. Keterampilan dasar untuk menyelamatkan jiwa, mencegah cedera lebih parah, dan memberi rasa nyaman. Termasuk penanganan luka, pingsan, dan keseleo (metode RICE).</p>')}
+                        </div>`,
+                }
+            },
+            pancasila: {
+                title: "Pendidikan Pancasila",
+                sidebar: [
+                    { id: 'intro', title: 'Pendahuluan' },
+                    { id: 'bab1', title: 'Bab 1: Pancasila Pemersatu' },
+                    { id: 'bab2', title: 'Bab 2: Budaya Taat Hukum' },
+                    { id: 'bab3', title: 'Bab 3: Mengelola Kebinekaan' },
+                    { id: 'bab4', title: 'Bab 4: Menjadi Warga Negara Baik' }
+                ],
+                content: {
+                    intro: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Pancasila, Jati Diri dan Pedoman Kita</h2>
+                        <p class="text-stone-700 leading-relaxed">
+                            Selamat datang di Pendidikan Pancasila! Pelajaran ini bertujuan membentuk karakter Anda sebagai warga negara Indonesia yang baik. Anda akan diajak untuk memahami, menghayati, dan mengamalkan nilai-nilai luhur Pancasila dalam kehidupan. Pancasila adalah dasar negara, pandangan hidup, dan ideologi kita yang menjadi pemersatu serta pedoman arah bangsa.
+                        </p>`,
+                    bab1: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Bab 1: Pancasila sebagai Pemersatu Bangsa</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Bab ini menelusuri jejak sejarah lahirnya Pancasila, memahami kedudukannya yang fundamental, dan bagaimana nilai-nilainya dapat diterapkan untuk memperkokoh persatuan bangsa.</p>
+                        <div class="space-y-4">
+                            ${createAccordion('perumusan_pancasila', 'Sejarah Perumusan Pancasila', `
+                                <p>Lahir melalui sidang BPUPK (29 Mei - 1 Juni 1945) dengan gagasan dari M. Yamin, Soepomo, dan Ir. Soekarno. Kemudian dirumuskan oleh Panitia Sembilan dalam Piagam Jakarta, dan akhirnya disahkan oleh PPKI pada 18 Agustus 1945 dengan perubahan sila pertama menjadi "Ketuhanan Yang Maha Esa" demi persatuan bangsa.</p>
+                            `)}
+                            ${createAccordion('fungsi_pancasila', 'Kedudukan dan Fungsi Pancasila', `
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Dasar Negara:</b> Landasan filosofis dan yuridis penyelenggaraan negara.</li>
+                                    <li><b>Pandangan Hidup:</b> Pedoman tingkah laku bangsa Indonesia.</li>
+                                    <li><b>Ideologi Negara:</b> Sistem gagasan dan cita-cita nasional yang bersifat terbuka dan dinamis.</li>
+                                </ul>
+                            `)}
+                             ${createAccordion('implementasi_pancasila', 'Implementasi Nilai-Nilai Pancasila', `
+                                <p>Pengamalan nilai-nilai Pancasila dalam kehidupan sehari-hari adalah kunci. Klik setiap Sila untuk melihat contohnya.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                                    <div class="content-card bg-stone-50 p-3 rounded-lg border"><b>1. Ketuhanan:</b> Toleransi & kerukunan beragama.</div>
+                                    <div class="content-card bg-stone-50 p-3 rounded-lg border"><b>2. Kemanusiaan:</b> Menghargai HAM & bersikap adil.</div>
+                                    <div class="content-card bg-stone-50 p-3 rounded-lg border"><b>3. Persatuan:</b> Cinta tanah air & rela berkorban.</div>
+                                    <div class="content-card bg-stone-50 p-3 rounded-lg border"><b>4. Kerakyatan:</b> Mengutamakan musyawarah & mufakat.</div>
+                                    <div class="content-card bg-stone-50 p-3 rounded-lg border"><b>5. Keadilan:</b> Gotong royong & sikap adil pada sesama.</div>
+                                </div>
+                            `)}
+                        </div>`,
+                    bab2: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Bab 2: Membangun Budaya Taat Hukum</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Memahami pentingnya hukum dan norma dalam menciptakan masyarakat yang tertib dan adil. Ketaatan hukum lahir dari kesadaran, bukan paksaan.</p>
+                        <div class="space-y-4">
+                            ${createAccordion('norma', 'Macam-macam Norma', `
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Norma Agama:</b> Bersumber dari wahyu Tuhan.</li>
+                                    <li><b>Norma Kesusilaan:</b> Bersumber dari hati nurani.</li>
+                                    <li><b>Norma Kesopanan:</b> Bersumber dari tata pergaulan masyarakat.</li>
+                                    <li><b>Norma Hukum:</b> Dibuat lembaga resmi, bersifat memaksa dan memiliki sanksi tegas.</li>
+                                </ul>
+                            `)}
+                            ${createAccordion('hierarki_hukum', 'Hierarki Peraturan Perundang-undangan', `
+                                <p class="mb-4">Indonesia adalah negara hukum. Pancasila adalah sumber dari segala sumber hukum. Berikut adalah tata urutan peraturan di Indonesia (UU No. 12 Th 2011).</p>
+                                <div class="space-y-2 text-sm">
+                                    <div class="hierarchy-item border-sky-800 p-2 pl-4 bg-sky-50 rounded-r-lg"><b>1. UUD NRI Tahun 1945</b></div>
+                                    <div class="hierarchy-item border-sky-700 p-2 pl-8 bg-sky-50 rounded-r-lg"><b>2. Tap MPR</b></div>
+                                    <div class="hierarchy-item border-sky-600 p-2 pl-12 bg-sky-50 rounded-r-lg"><b>3. UU / Perppu</b></div>
+                                    <div class="hierarchy-item border-sky-500 p-2 pl-16 bg-sky-50 rounded-r-lg"><b>4. Peraturan Pemerintah (PP)</b></div>
+                                    <div class="hierarchy-item border-sky-400 p-2 pl-20 bg-sky-50 rounded-r-lg"><b>5. Peraturan Presiden (Perpres)</b></div>
+                                    <div class="hierarchy-item border-sky-300 p-2 pl-24 bg-sky-50 rounded-r-lg"><b>6. Perda Provinsi</b></div>
+                                    <div class="hierarchy-item border-sky-200 p-2 pl-28 bg-sky-50 rounded-r-lg"><b>7. Perda Kab/Kota</b></div>
+                                </div>
+                            `)}
+                        </div>`,
+                     bab3: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Bab 3: Mengelola Kebinekaan</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Keragaman suku, agama, ras, dan budaya adalah kekayaan bangsa. Bab ini membahas bagaimana Bhinneka Tunggal Ika dan gotong royong menjadi modal sosial untuk pembangunan.</p>
+                        <div class="space-y-4">
+                             ${createAccordion('bhinneka', 'Bhinneka Tunggal Ika', `
+                                <p>Semboyan yang berarti "Berbeda-beda tetapi tetap satu jua", berasal dari Kitab Sutasoma karya Mpu Tantular. Ini adalah perekat persatuan yang mengajarkan kita untuk menghormati perbedaan dan hidup rukun.</p>
+                            `)}
+                            ${createAccordion('gotong_royong', 'Gotong Royong', `
+                                <p>Nilai luhur bangsa yang berarti bekerja bersama demi tujuan bersama. Dalam ekonomi, diwujudkan melalui koperasi. Dalam sosial, memperkuat solidaritas dan harmoni di tengah keragaman.</p>
+                            `)}
+                        </div>
+                        `,
+                    bab4: `
+                         <h2 class="text-2xl font-bold text-sky-700 mb-4">Bab 4: Menjadi Warga Negara yang Baik</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Membahas hak dan kewajiban kita sebagai warga negara di berbagai lingkungan, serta peran Indonesia dalam konteks global, yang semuanya dilandasi nilai Pancasila.</p>
+                        <div class="space-y-4">
+                             ${createAccordion('hak_kewajiban', 'Keseimbangan Hak dan Kewajiban', `
+                                <p>Hak adalah sesuatu yang kita terima, sementara kewajiban adalah sesuatu yang harus kita laksanakan. Keduanya harus seimbang. Contoh kewajiban di sekolah: menaati tata tertib. Contoh hak: mendapat pengajaran yang layak.</p>
+                            `)}
+                            ${createAccordion('bela_negara', 'Sistem Pertahanan & Keamanan (Sishankamrata)', `
+                                <p>Pertahanan negara adalah tanggung jawab seluruh komponen bangsa, bukan hanya TNI dan Polri. TNI sebagai komponen utama pertahanan, Polri sebagai komponen utama keamanan, dan rakyat sebagai kekuatan pendukung.</p>
+                            `)}
+                            ${createAccordion('luar_negeri', 'Politik Luar Negeri "Bebas Aktif"', `
+                                <p><b>Bebas:</b> Tidak memihak blok kekuatan dunia. <b>Aktif:</b> Turut serta dalam menjaga perdamaian dunia. Indonesia aktif berperan di PBB, ASEAN, APEC, dan OKI.</p>
+                            `)}
+                        </div>`
+                }
+            },
+            fisika: {
+                title: "Fisika",
+                sidebar: [
+                    { id: 'intro', title: 'Pendahuluan' },
+                    { id: 'hakikat', title: 'Hakikat Fisika & Metode Ilmiah' },
+                    { id: 'pengukuran', title: 'Besaran dan Pengukuran' },
+                    { id: 'vektor', title: 'Besaran Vektor' }
+                ],
+                content: {
+                    intro: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Fisika Itu Mengasyikkan!</h2>
+                        <p class="text-stone-700 leading-relaxed">
+                           Selamat datang di dunia Fisika! Fisika adalah ilmu yang mempelajari gejala alam semesta, dari partikel terkecil hingga galaksi raksasa. Dengan belajar Fisika, Anda akan memahami bagaimana alam ini bekerja, mengapa suatu fenomena terjadi, dan bagaimana prinsipnya diterapkan dalam teknologi sehari-hari. Fisika ada di mana-mana, dan memahaminya akan membuka wawasan baru yang seru!
+                        </p>`,
+                    hakikat: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Hakikat Fisika & Metode Ilmiah</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Sebelum menyelami konsep fisika, kita perlu tahu apa itu fisika, bagaimana ilmuwan bekerja, dan cara aman beraktivitas di laboratorium.</p>
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="font-semibold text-lg text-sky-800 mb-2">Hakikat Fisika</h3>
+                                <div class="grid md:grid-cols-3 gap-4">
+                                    <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Sebagai Produk:</b> Kumpulan pengetahuan (fakta, konsep, hukum, teori).</div>
+                                    <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Sebagai Proses:</b> Cara penyelidikan menggunakan metode ilmiah.</div>
+                                    <div class="content-card bg-stone-50 p-4 rounded-lg border border-stone-200"><b>Sebagai Sikap:</b> Sikap ilmiah (rasa ingin tahu, objektif, jujur, kritis).</div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-sky-800 mb-2">Metode Ilmiah</h3>
+                                <p>Urutan langkah sistematis untuk memecahkan masalah. Klik untuk detail.</p>
+                                <div id="scientific-method-stepper" class="mt-4 space-y-2">
+                                    ${createStepperItem('Observasi', 'Mengamati fenomena atau menemukan masalah.')}
+                                    ${createStepperItem('Merumuskan Masalah', 'Membuat pertanyaan spesifik untuk diteliti.')}
+                                    ${createStepperItem('Mengumpulkan Informasi', 'Studi literatur dari sumber terpercaya.')}
+                                    ${createStepperItem('Merumuskan Hipotesis', 'Membuat dugaan atau jawaban sementara.')}
+                                    ${createStepperItem('Eksperimen', 'Menguji hipotesis melalui percobaan terkontrol.')}
+                                    ${createStepperItem('Menganalisis Data', 'Mengolah dan menginterpretasi hasil eksperimen.')}
+                                    ${createStepperItem('Menarik Kesimpulan', 'Menyimpulkan apakah hipotesis diterima atau ditolak.')}
+                                </div>
+                            </div>
+                             <div>
+                                <h3 class="font-semibold text-lg text-sky-800 mb-2">Keselamatan Kerja di Lab</h3>
+                                <p>Mengenali simbol bahan berbahaya sangat penting untuk mencegah kecelakaan.</p>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-center text-sm">
+                                    <div class="content-card bg-red-100 p-3 rounded-lg"><b class="text-red-800">🔥 Mudah Terbakar</b><p>Jauhkan dari api</p></div>
+                                    <div class="content-card bg-yellow-100 p-3 rounded-lg"><b class="text-yellow-800"> corrosive ☣️ Korosif</b><p>Hindari kontak kulit</p></div>
+                                    <div class="content-card bg-gray-200 p-3 rounded-lg"><b class="text-gray-800">☠️ Beracun</b><p>Jangan terhirup/tertelan</p></div>
+                                    <div class="content-card bg-orange-100 p-3 rounded-lg"><b class="text-orange-800">💥 Mudah Meledak</b><p>Hindari benturan/panas</p></div>
+                                </div>
+                            </div>
+                        </div>`,
+                    pengukuran: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Besaran dan Pengukuran</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Pengukuran adalah jantung dari fisika. Melalui pengukuran, kita dapat mengkuantifikasi fenomena alam. Besaran adalah segala sesuatu yang dapat diukur, memiliki nilai, dan satuan.</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="font-semibold text-lg text-sky-800 mb-2">7 Besaran Pokok (SI)</h3>
+                                <div class="space-y-2">
+                                    <p class="bg-stone-50 p-2 rounded"><b>Panjang</b> (meter, [L])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Massa</b> (kilogram, [M])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Waktu</b> (sekon, [T])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Suhu</b> (kelvin, [θ])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Kuat Arus</b> (ampere, [I])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Intensitas Cahaya</b> (kandela, [J])</p>
+                                    <p class="bg-stone-50 p-2 rounded"><b>Jumlah Zat</b> (mol, [N])</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-lg text-sky-800 mb-2">Besaran Turunan</h3>
+                                <p class="mb-2">Besaran yang diturunkan dari besaran pokok. Contoh:</p>
+                                <ul class="list-disc list-inside space-y-2 text-stone-600">
+                                    <li><b>Kecepatan:</b> diturunkan dari Panjang dan Waktu (m/s). Dimensinya [L][T]⁻¹.</li>
+                                    <li><b>Gaya:</b> diturunkan dari Massa, Panjang, dan Waktu (newton). Dimensinya [M][L][T]⁻².</li>
+                                    <li><b>Massa Jenis:</b> diturunkan dari Massa dan Panjang (kg/m³). Dimensinya [M][L]⁻³.</li>
+                                </ul>
+                                <h3 class="font-semibold text-lg text-sky-800 mt-4 mb-2">Analisis Dimensi</h3>
+                                <p>Dimensi berguna untuk memeriksa kebenaran suatu rumus atau persamaan fisika.</p>
+                            </div>
+                        </div>`,
+                    vektor: `
+                        <h2 class="text-2xl font-bold text-sky-700 mb-4">Besaran Vektor</h2>
+                        <p class="text-stone-700 leading-relaxed mb-6">Dalam fisika, besaran dibedakan menjadi dua jenis utama berdasarkan ada tidaknya arah. Memahami perbedaan ini sangat fundamental.</p>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="content-card bg-sky-50 p-6 rounded-lg border-2 border-sky-200">
+                                <h3 class="font-bold text-xl text-sky-800">Besaran Skalar</h3>
+                                <p class="mt-2">Hanya memiliki <b>NILAI</b>, tidak memiliki arah.</p>
+                                <p class="mt-4 font-semibold">Contoh:</p>
+                                <ul class="list-disc list-inside mt-2 text-stone-700">
+                                    <li>Jarak (10 meter)</li>
+                                    <li>Kelajuan (20 m/s)</li>
+                                    <li>Massa (5 kg)</li>
+                                    <li>Waktu (15 detik)</li>
+                                    <li>Suhu (300 K)</li>
+                                </ul>
+                            </div>
+                             <div class="content-card bg-amber-50 p-6 rounded-lg border-2 border-amber-200">
+                                <h3 class="font-bold text-xl text-amber-800">Besaran Vektor</h3>
+                                <p class="mt-2">Memiliki <b>NILAI</b> dan <b>ARAH</b>.</p>
+                                <p class="mt-4 font-semibold">Contoh:</p>
+                                <ul class="list-disc list-inside mt-2 text-stone-700">
+                                    <li>Perpindahan (10 meter <b>ke timur</b>)</li>
+                                    <li>Kecepatan (20 m/s <b>ke utara</b>)</li>
+                                    <li>Gaya (5 Newton <b>ke bawah</b>)</li>
+                                    <li>Percepatan (2 m/s² <b>ke kanan</b>)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h3 class="font-semibold text-lg text-sky-800 mt-8 mb-2">Penjumlahan Vektor</h3>
+                        <p>Penjumlahan vektor tidak bisa langsung seperti skalar karena memperhitungkan arah. Metode yang digunakan antara lain metode grafis (poligon, jajargenjang) dan metode analitis (menggunakan komponen vektor).</p>
+                        `
+                }
+            }
+        };
+
+        const navPjok = document.getElementById('nav-pjok');
+        const navPancasila = document.getElementById('nav-pancasila');
+        const navFisika = document.getElementById('nav-fisika');
+        const sidebarContainer = document.getElementById('sidebar-container');
+        const contentDisplay = document.getElementById('content-display');
+        let currentChart = null;
+        
+        function createAccordion(id, title, content) {
+            return `
+                <div class="border border-stone-200 rounded-lg">
+                    <button id="accordion-btn-${id}" class="w-full flex justify-between items-center text-left p-4 bg-stone-50 hover:bg-stone-100 rounded-lg focus:outline-none">
+                        <span class="font-semibold text-stone-700">${title}</span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div id="accordion-content-${id}" class="accordion-content px-4">
+                        <div class="py-4 border-t border-stone-200">${content}</div>
+                    </div>
+                </div>`;
+        }
+        
+        function createStepperItem(title, description) {
+            return `
+                <div class="flex items-start gap-4 stepper-item">
+                    <div class="flex-shrink-0 w-8 h-8 bg-sky-100 text-sky-700 font-bold rounded-full flex items-center justify-center"></div>
+                    <div>
+                        <h4 class="font-semibold">${title}</h4>
+                        <p class="text-sm text-stone-600">${description}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setActiveNav(activeButton) {
+            [navPjok, navPancasila, navFisika].forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'text-white');
+                btn.classList.add('text-stone-700');
+            });
+            activeButton.classList.add('bg-sky-600', 'text-white');
+            activeButton.classList.remove('text-stone-700');
+        }
+
+        function showTopic(subjectKey, topicId) {
+            const topicContent = appData[subjectKey].content[topicId];
+            contentDisplay.innerHTML = topicContent;
+            
+            sidebarContainer.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('bg-sky-100', 'text-sky-800', 'font-bold');
+                if (item.dataset.topicId === topicId) {
+                    item.classList.add('bg-sky-100', 'text-sky-800', 'font-bold');
+                }
+            });
+
+            if (currentChart) {
+                currentChart.destroy();
+                currentChart = null;
+            }
+
+            if (topicId === 'kebugaran') {
+                renderKebugaranChart();
+            }
+            
+            document.querySelectorAll('[id^="accordion-btn-"]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('span:last-child');
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+            
+            updateStepperNumbers();
+        }
+
+        function showSubject(subjectKey) {
+            const subjectData = appData[subjectKey];
+            sidebarContainer.innerHTML = `
+                <div class="bg-white rounded-xl shadow-md p-4 sticky top-8">
+                    <h3 class="text-lg font-bold text-sky-800 mb-4 border-b pb-2">${subjectData.title}</h3>
+                    <div class="space-y-1">
+                        ${subjectData.sidebar.map(item => `
+                            <a href="#" class="sidebar-item block w-full text-left px-4 py-2 rounded-md text-stone-600 hover:bg-sky-100 hover:text-sky-800" data-topic-id="${item.id}">
+                                ${item.title}
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>`;
+
+            sidebarContainer.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showTopic(subjectKey, item.dataset.topicId);
+                });
+            });
+
+            showTopic(subjectKey, subjectData.sidebar[0].id);
+        }
+        
+        function updateStepperNumbers() {
+            const stepperItems = document.querySelectorAll('#scientific-method-stepper .stepper-item');
+            stepperItems.forEach((item, index) => {
+                const circle = item.querySelector('div:first-child');
+                circle.textContent = index + 1;
+            });
+        }
+        
+        function renderKebugaranChart() {
+            const ctx = document.getElementById('kebugaranChart').getContext('2d');
+            const data = {
+                labels: ['Kekuatan', 'Kecepatan', 'Kelenturan', 'Daya Tahan', 'Kelincahan', 'Keseimbangan', 'Koordinasi', 'Daya Ledak', 'Ketepatan', 'Reaksi'],
+                datasets: [{
+                    label: 'Komponen Kebugaran Jasmani',
+                    data: [8, 9, 7, 10, 9, 7, 8, 9, 6, 8],
+                    fill: true,
+                    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                    borderColor: 'rgb(56, 189, 248)',
+                    pointBackgroundColor: 'rgb(56, 189, 248)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(56, 189, 248)'
+                }]
+            };
+            const tooltips = {
+                Kekuatan: 'Contoh: Push-up, Sit-up',
+                Kecepatan: 'Contoh: Lari sprint 50m',
+                Kelenturan: 'Contoh: Kayang, Cium lutut',
+                'Daya Tahan': 'Contoh: Lari 2.4 km',
+                Kelincahan: 'Contoh: Lari zig-zag',
+                Keseimbangan: 'Contoh: Berdiri satu kaki',
+                Koordinasi: 'Contoh: Melempar & menangkap bola',
+                'Daya Ledak': 'Contoh: Squat jump',
+                Ketepatan: 'Contoh: Memanah, menembak',
+                Reaksi: 'Contoh: Menangkap benda jatuh',
+            }
+
+            currentChart = new Chart(ctx, {
+                type: 'radar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: { line: { tension: 0.1 } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    return tooltips[context.label] || '';
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 10,
+                            pointLabels: { font: { size: 11 } },
+                            ticks: { backdropColor: 'rgba(255, 255, 255, 0.75)' }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        navPjok.addEventListener('click', () => {
+            setActiveNav(navPjok);
+            showSubject('pjok');
+        });
+        navPancasila.addEventListener('click', () => {
+            setActiveNav(navPancasila);
+            showSubject('pancasila');
+        });
+        navFisika.addEventListener('click', () => {
+            setActiveNav(navFisika);
+            showSubject('fisika');
+        });
+
+    </script>
+</body>
+</html>
